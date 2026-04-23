@@ -1,0 +1,9 @@
+# Ignore the entire tools directory (Git and Node installations)
+tools/
+
+# Standard ignores
+node_modules/
+.env
+backend/.env
+*.db
+dist/

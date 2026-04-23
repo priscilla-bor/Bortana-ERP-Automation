@@ -1,0 +1,28 @@
+.btn-yellow {
+  background: var(--bortana-yellow);
+  color: var(--bortana-black);
+  border: none;
+  padding: 14px 40px;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.btn-yellow:hover:not(:disabled) { 
+  background: #e5ad06; 
+  transform: translateY(-1px); 
+}
+
+.btn-yellow:active:not(:disabled) { 
+  transform: translateY(1px); 
+}
+
+.btn-yellow:disabled { 
+  background: #e9ecef; 
+  color: #adb5bd; 
+  cursor: not-allowed; 
+}
