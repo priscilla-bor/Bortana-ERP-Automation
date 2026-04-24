@@ -19,7 +19,7 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: 'http://3.25.94.141', credentials: true }));
 
 const dbPath = path.join(__dirname, 'erp.db');
 const db = new sqlite3.Database(dbPath);
@@ -30,7 +30,7 @@ app.get('/api/auth/callback', auth.callback);
 app.get('/api/logout', (req, res) => {
     req.session.destroy(() => {
         res.clearCookie('connect.sid'); 
-        res.redirect('http://localhost:5173'); 
+        res.redirect('/');  // Redirect to frontend home after logout
     });
 });
 
@@ -202,4 +202,4 @@ db.serialize(() => {
     )`);
 });
 
-app.listen(3000, () => console.log(`Bortana ERP Live at http://localhost:3000`));
+app.listen(5000, () => console.log(`Bortana ERP Live at http://localhost:5000`));
