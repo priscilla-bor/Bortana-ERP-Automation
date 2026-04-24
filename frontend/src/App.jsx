@@ -65,7 +65,7 @@ const LoginView = () => (
     <p style={{ marginBottom: '30px', color: '#666' }}>Secure Internal Access Only</p>
     <button 
       className="btn-yellow" 
-      onClick={() => window.location.href = "http://localhost:3000/api/login"}
+      onClick={() => window.location.href = "/api/auth/login"}
     >
       Sign In with Microsoft
     </button>
