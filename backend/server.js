@@ -1,19 +1,21 @@
+// 1. Move all 'requires' to the very top and only declare them once
 const path = require('path');
+const express = require('express');
+const session = require('express-session');
+const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
+
+// 2. Load environment variables immediately after 'path' is defined
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
-// Add these temporary logs to verify it's working on the EC2
+
+// 3. Keep your logs here to verify the EC2 is reading the .env file
 console.log("--- Environment Check ---");
 console.log("Redirect URI:", process.env.REDIRECT_URI);
 console.log("Client ID Present:", !!process.env.CLIENT_ID);
 console.log("-------------------------");
 
-const express = require('express');
-const session = require('express-session');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const cors = require('cors');
-
 const { getParts } = require('./modules/reader.js'); 
-const auth = require('./modules/auth'); 
+const auth = require('./modules/auth');
 
 const app = express();
 
