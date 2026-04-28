@@ -1,4 +1,11 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+// Add these temporary logs to verify it's working on the EC2
+console.log("--- Environment Check ---");
+console.log("Redirect URI:", process.env.REDIRECT_URI);
+console.log("Client ID Present:", !!process.env.CLIENT_ID);
+console.log("-------------------------");
+
 const express = require('express');
 const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
@@ -201,5 +208,6 @@ db.serialize(() => {
         FOREIGN KEY(component_id) REFERENCES components(id)
     )`);
 });
+
 
 app.listen(5000, () => console.log(`Bortana ERP Live at http://localhost:5000`));
