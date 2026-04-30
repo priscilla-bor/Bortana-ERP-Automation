@@ -1,11 +1,11 @@
-const path = require('path');
+const paths = require('path');
 const express = require('express');
 const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 
 // 2. Load environment variables immediately after 'path' is defined
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('dotenv').config({ path: paths.resolve(__dirname, '.env') });
 
 // 3. Keep your logs here to verify the EC2 is reading the .env file
 console.log("--- Environment Check ---");
@@ -29,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: 'http://3.25.94.141', credentials: true }));
 
-const dbPath = path.join(__dirname, 'erp.db');
+const dbPath = paths.join(__dirname, 'erp.db');
 const db = new sqlite3.Database(dbPath);
 
 // --- AUTH ROUTES ---
@@ -113,7 +113,7 @@ app.get('/api/releases/:id', auth.isAuthenticated, (req, res) => {
 // --- ITEM SEARCH & REVISION ---
 app.get('/api/item-master', auth.isAuthenticated, (req, res) => {
     try {
-        const itemDetailPath = path.join(__dirname, 'data', 'PartID detail.xlsx');
+        const itemDetailPath = paths.join(__dirname, 'data', 'PartID detail.xlsx');
         const items = getParts(itemDetailPath); 
         res.json(items);
     } catch (err) { res.status(500).json({ error: "Could not load item details" }); }
@@ -171,7 +171,7 @@ app.post('/api/approve/:id', auth.isAuthenticated, (req, res) => {
 });
 
 // --- INITIALIZATION ---
-const excelFilePath = path.join(__dirname, 'data', '006BOM.xlsx');
+const excelFilePath = paths.join(__dirname, 'data', '006BOM.xlsx');
 function seedDatabaseIfNeeded() {
     db.get(`SELECT COUNT(*) as count FROM components`, (err, row) => {
         if (err || (row && row.count > 0)) return;
