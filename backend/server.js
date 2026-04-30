@@ -42,7 +42,7 @@ app.get('/api/logout', (req, res) => {
     });
 });
 
-// --- DASHBOARD & SUMMARY (The "Brain" of the App) ---
+// --- DASHBOARD & SUMMARY  ---
 app.get('/api/dashboard-summary', auth.isAuthenticated, (req, res) => {
     const user = req.session.user.name;
 
