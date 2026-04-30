@@ -18,11 +18,19 @@ const auth = require('./modules/auth');
 
 const app = express();
 
+
+app.set('trust proxy', 1); 
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'bortana-development-secret-key', 
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, httpOnly: true, sameSite: 'lax', maxAge: 3600000 }
+    cookie: { 
+        secure: true,      // Set to true if using HTTPS in production
+        httpOnly: true, 
+        sameSite: 'lax',   // 'lax' is usually best for MSAL redirects
+        maxAge: 3600000 
+    }
 }));
 
 app.use(express.json());
