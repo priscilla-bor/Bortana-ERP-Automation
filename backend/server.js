@@ -27,14 +27,14 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: 'http://3.25.94.141', credentials: true }));
+app.use(cors({ origin: 'https://erprocess.bortana.support', credentials: true }));
 
 const dbPath = paths.join(__dirname, 'erp.db');
 const db = new sqlite3.Database(dbPath);
 
 // --- AUTH ROUTES ---
-app.get('/api/login', auth.login);
-app.get('/api/auth/callback', auth.callback);
+app.get('/api/auth/login', auth.login);
+app.get('/api/auth/callback', auth.callback); //-- https://erprocess.bortana.support/api/auth/callback --//
 app.get('/api/logout', (req, res) => {
     req.session.destroy(() => {
         res.clearCookie('connect.sid'); 
