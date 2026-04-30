@@ -1,4 +1,3 @@
-// 1. Move all 'requires' to the very top and only declare them once
 const path = require('path');
 const express = require('express');
 const session = require('express-session');

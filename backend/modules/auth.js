@@ -1,6 +1,6 @@
 const msal = require('@azure/msal-node');
 const session = require('express-session');
-const path = require('path');
+//const path = require('path');
 
 // LOAD ENVIRONMENT VARIABLES IN THIS MODULE TOO
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') }); 
