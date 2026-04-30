@@ -11,13 +11,16 @@ import ReleasePortal from './views/ReleasePortal';
 import EngineeringReleaseForm from './components/EngineeringReleaseForm';
 import NavBar from './components/NavBar';
 
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Initial Auth Handshake
-    fetch("http://localhost:3000/api/dashboard-data", { credentials: 'include' })
+    fetch(`${API_BASE_URL}/dashboard-data`, { credentials: 'include' })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => setUser(data.user))
       .catch(() => setUser(null))

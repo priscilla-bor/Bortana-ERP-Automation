@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const EngineeringReleaseForm = ({ user }) => {
     const navigate = useNavigate();
     const [items, setItems] = useState([]); // From PartID detail.xlsx
@@ -28,7 +30,7 @@ const EngineeringReleaseForm = ({ user }) => {
 
     // Load Items for selection
     useEffect(() => {
-        fetch('http://localhost:3000/api/dashboard-data', { credentials: 'include' })
+        fetch(`${API_BASE_URL}/dashboard-data`, { credentials: 'include' })
             .then(res => res.json()).then(data => setItems(data.releases || []));
     }, []);
 
@@ -50,7 +52,7 @@ const EngineeringReleaseForm = ({ user }) => {
         setSearch(itemName);
         setResults([]);
         
-        const res = await fetch(`http://localhost:3000/api/check-revision?product=6064&system=006&item=${itemCode}`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE_URL}/check-revision?product=6064&system=006&item=${itemCode}`, { credentials: 'include' });
         const data = await res.json();
         
         setFormData(prev => ({ 
@@ -66,7 +68,7 @@ const EngineeringReleaseForm = ({ user }) => {
         e.preventDefault();
         const fullPN = `${formData.project}.${formData.system}.${formData.item}.${formData.finish}.${formData.rev}.${formData.code}`;
         
-        const res = await fetch('http://localhost:3000/api/components', {
+        const res = await fetch(`${API_BASE_URL}/components`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...formData, part_number: fullPN }),

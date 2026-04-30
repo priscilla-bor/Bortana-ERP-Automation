@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const Dashboard = () => {
     const navigate = useNavigate();
     const [summary, setSummary] = useState({ stats: [], digest: [], user: '' });
@@ -8,7 +10,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`http://localhost:3000/api/dashboard-summary?timeframe=${timeframe}`, { credentials: 'include' })
+        fetch(`${API_BASE_URL}/dashboard-summary?timeframe=${timeframe}`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 setSummary({

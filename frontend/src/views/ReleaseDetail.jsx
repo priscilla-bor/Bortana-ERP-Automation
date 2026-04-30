@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const ReleaseDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -12,7 +14,7 @@ const ReleaseDetail = () => {
     useEffect(() => {
         const fetchDetails = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/api/releases/${id}`, { credentials: 'include' });
+                const res = await fetch(`${API_BASE_URL}/releases/${id}`, { credentials: 'include' });
                 if (res.ok) {
                     const result = await res.json();
                     setData(result);
@@ -27,7 +29,7 @@ const ReleaseDetail = () => {
     }, [id]);
 
     const handleApprove = async () => {
-        await fetch(`http://localhost:3000/api/approve/${id}`, {
+        await fetch(`${API_BASE_URL}/approve/${id}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ comment }),

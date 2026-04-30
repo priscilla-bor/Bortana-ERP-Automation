@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const NavBar = ({ user }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
         // Redirects to the backend logout route we built in server.js
-        window.location.href = "http://localhost:3000/api/logout";
+        window.location.href = `${API_BASE_URL}/logout`; 
     };
 
     return (

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const EngineeringReleaseForm = ({ user }) => {
     const navigate = useNavigate();
     
@@ -36,7 +38,7 @@ const EngineeringReleaseForm = ({ user }) => {
     });
 
     useEffect(() => {
-        fetch('http://localhost:3000/api/item-master', { credentials: 'include' })
+        fetch(`${API_BASE_URL}/item-master`, { credentials: 'include' })
             .then(res => res.json()).then(data => setItemMaster(data));
     }, []);
 
@@ -56,7 +58,7 @@ const EngineeringReleaseForm = ({ user }) => {
     useEffect(() => {
         const fetchRevision = async () => {
             if (!formData.project || !formData.system || !formData.item || !formData.finish) return;
-            const res = await fetch(`http://localhost:3000/api/check-revision?product=${formData.project}&system=${formData.system}&item=${formData.item}&finish=${formData.finish}`, { credentials: 'include' });
+            const res = await fetch(`${API_BASE_URL}/check-revision?product=${formData.project}&system=${formData.system}&item=${formData.item}&finish=${formData.finish}`, { credentials: 'include' });
             const data = await res.json();
             setFormData(prev => ({ 
                 ...prev, 
@@ -99,8 +101,8 @@ const EngineeringReleaseForm = ({ user }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const fullPN = `${formData.project}.${formData.system}.${formData.item}.${formData.finish}.${formData.rev}.${formData.code}`;
-        
-        await fetch('http://localhost:3000/api/components', {
+
+        await fetch(`${API_BASE_URL}/components`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...formData, part_number: fullPN, name: formData.part_name, status: 'Review' }),

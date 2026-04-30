@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const ReleasePortal = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -32,7 +34,7 @@ const ReleasePortal = () => {
         
         query.append('sort', sortBy);
 
-        fetch(`http://localhost:3000/api/releases?${query.toString()}`, { credentials: 'include' })
+        fetch(`${API_BASE_URL}/releases?${query.toString()}`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => setReleases(data || []))
             .catch(err => console.error("Error fetching releases:", err));
@@ -66,7 +68,7 @@ const ReleasePortal = () => {
 
     const handleDelete = async () => {
         if (!selected.length) return;
-        await fetch('http://localhost:3000/api/releases/bulk-delete', {
+        await fetch(`${API_BASE_URL}/releases/bulk-delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids: selected }),
