@@ -273,9 +273,10 @@ db.serialize(() => {
 
         -- Approval Workflow
         approval_person TEXT,
-        approval_date TEXT,   -- Renamed 'date' to 'approval_date' for clarity
+        approval_date TEXT,
 
         -- System Fields
+        finishing_stage TEXT,  -- <--- RE-ADDED THIS MISSING COLUMN
         revision TEXT, 
         bortana_code TEXT, 
         status TEXT DEFAULT 'Review', 
@@ -284,7 +285,6 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => { if (!err) seedDatabaseIfNeeded(); });
 
-   
     db.run(`CREATE TABLE IF NOT EXISTS activity_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         component_id INTEGER, 
