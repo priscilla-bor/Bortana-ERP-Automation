@@ -210,19 +210,36 @@ const EngineeringReleaseForm = ({ user }) => {
 
                 {/* PART INFORMATION */}
                 <div className="form-section-header">Part Information</div>
+
                 <div className="form-grid-2">
                     <div className="field-box">
                         <label className="main-label">Part Name</label>
                         <input type="text" placeholder="Enter part name..." value={formData.part_name} onChange={e => setFormData({...formData, part_name: e.target.value})} />
                     </div>
-                    <div className="field-box">
-                        <label className="main-label">Part Number</label>
-                        <input type="text" placeholder="Enter part number..." value={formData.part_number} onChange={e => setFormData({...formData, part_number: e.target.value})} />
+
+                <div className="field-box">
+                        <label className="main-label">Part Number </label>
+                        <input 
+                            type="text" 
+                            value={formData.part_number} 
+                            readOnly 
+                            className="id-readonly" 
+                            style={{ fontWeight: '600', backgroundColor: '#f9f9f9' }} 
+                        />
                     </div>
+
                     <div className="field-box">
-                        <label className="main-label">Project Code</label>
-                        <input type="text" value={formData.project} readOnly className="identifier-input-clean id-readonly" style={{ fontWeight: '600' }} />
-                    </div>
+                            <label className="main-label">Project Code</label>
+                            <input 
+                                type="text" 
+                                value="6040" 
+                                readOnly 
+                                className="id-readonly" 
+                                style={{ fontWeight: '600' }} 
+                            />
+                        </div>
+
+
                     <div className="field-box">
                         <label className="main-label">Part Type</label>
                         <div className="vertical-checkbox-group">
@@ -242,19 +259,27 @@ const EngineeringReleaseForm = ({ user }) => {
                         <label><input type="checkbox" checked={formData.Modified} onChange={e => setFormData({...formData, Modified: e.target.checked})} /> Modified</label>
                         <label><input type="checkbox" checked={formData.Phaseout} onChange={e => setFormData({...formData, Phaseout: e.target.checked})} /> Phaseout</label>
                     </div>
+
                     <div className='field-box'>
                         <label className='main-label'>Modification Description</label>
                         <textarea placeholder='Enter modification description...' value={formData.modification_description} onChange={e => setFormData({...formData, modification_description: e.target.value})} />
                     </div>
+
                     <div className='field-box'>
                         <label className='main-label'>Modification Reason</label>
                         <textarea placeholder='Enter modification reason...' value={formData.modification_reason} onChange={e => setFormData({...formData, modification_reason: e.target.value})} />
                     </div>
-                    <div className='field-box'> 
-                        <label className='main-label'>Responsible Engineer </label>
-                        <input type='text' value={formData.responsible_engineer} readOnly style={{ background: '#f0f0f0' }} />
-                    </div>
-                </div>      
+
+                    <div className="field-box">
+                            <label className="main-label">Responsible Engineer</label>
+                            <input 
+                                type="text" 
+                                value={formData.responsible_engineer} 
+                                readOnly 
+                                className="id-readonly"  
+                            />
+                        </div>
+                    </div>      
 
                 {/* DESIGN & ANALYSIS */}
                 <div className="form-section-header">Design & Analysis</div>

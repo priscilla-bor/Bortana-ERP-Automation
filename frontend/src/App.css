@@ -26,3 +26,36 @@
   color: #adb5bd; 
   cursor: not-allowed; 
 }
+
+/* Section Headers (1. Part Information, 2. Mod Details, etc.) */
+.detail-sub-header {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--bortana-yellow); /* Make sure this variable is defined */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin: 35px 0 15px 0;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+/* The 2-column grid for metadata */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 30px; /* Adjusts spacing between items */
+}
+
+/* Ensure read-only styles remain consistent with the form */
+.id-readonly {
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    color: #666 !important;
+    cursor: not-allowed;
+}
+
+/* Optional: Smooth scrolling for the activity timeline on the right */
+.timeline {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bortana-yellow) #f0f0f0;
+}
