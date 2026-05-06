@@ -43,13 +43,6 @@ const ReleaseDetail = () => {
 
     return (
         <div style={{ padding: '30px' }}>
-            {/* VIEW MODE TOGGLE */}
-            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                <select value={viewMode} onChange={e => setViewMode(e.target.value)}>
-                    <option value="Engineer">View As: Engineer</option>
-                    <option value="Reviewer">View As: Reviewer</option>
-                </select>
-            </div>
 
             {/* NAVIGATION BAR */}
             <button 
@@ -67,13 +60,6 @@ const ReleaseDetail = () => {
                 </span>
             </div>
 
-            {/* MANAGEMENT TOOLBAR */}
-            <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-                <select value={viewMode} onChange={e => setViewMode(e.target.value)} style={{ padding: '10px', borderRadius: '4px', border: '1px solid var(--border)', background: '#fff' }}>
-                    <option value="Engineer">View As: Engineer</option>
-                    <option value="Reviewer">View As: Reviewer</option>
-                </select>
-            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '30px' }}>
                 
@@ -89,7 +75,8 @@ const ReleaseDetail = () => {
 
                         <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
 
-                        {/* METADATA GRID */}
+                        {/* METADATA GRID */} 
+                        {/*fix：目前<p>里只渲染了part_type，drawing_2d，Drawing Status等这些内容，需要手动添加releaseform里面所有的字段*/}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
                             <div>
                                 <h4 style={{ color: '#888', textTransform: 'uppercase', fontSize: '0.75rem', marginBottom: '5px' }}>Part Type</h4>
@@ -98,7 +85,7 @@ const ReleaseDetail = () => {
                             <div>
                                 <h4 style={{ color: '#888', textTransform: 'uppercase', fontSize: '0.75rem', marginBottom: '5px' }}>Project</h4>
                                 <p style={{ margin: 0, fontWeight: '500' }}>6040</p>
-                            </div>
+                            </div> {/*fix：对应6040的大标题，应该更换为projectName*/}
                             <div>
                                 <h4 style={{ color: '#888', textTransform: 'uppercase', fontSize: '0.75rem', marginBottom: '5px' }}>Drawing Status</h4>
                                 <p style={{ margin: 0, fontWeight: '500' }}>{data.drawing_2d || data.drawing_3d ? 'Available' : 'Not Available'}</p>

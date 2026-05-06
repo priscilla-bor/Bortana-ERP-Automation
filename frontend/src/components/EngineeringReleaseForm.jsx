@@ -6,36 +6,65 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
 const EngineeringReleaseForm = ({ user }) => {
     const navigate = useNavigate();
     
-    // --- RESTORED LOGIC VARIABLES ---
+    // --- LOGIC VARIABLES ---
     const [itemMaster, setItemMaster] = useState([]);
     const [search, setSearch] = useState("");
     const [results, setResults] = useState([]);
     
-    // RESTORED FULL STATE OBJECT
+    // STATE OBJECT
     const [formData, setFormData] = useState({
+        // Part Information
         project: '6040', system: '006', item: '', finish: '00', rev: '001', code: 'B',
-        
-        part_name: '', mod_type: 'New', 
-        date: new Date().toISOString().split('T')[0],
-        
-        drawing_2d: false, drawing_3d: true,
-        fea: 'No', test_reports: 'No', mandatory: 'No',
+        part_name: '',
+        part_number: '',
+        Assembly: false,
+        Sourced_Finished: false,
+        Sourced_Unfinished: false,
 
+        // Modification Details
+        New: true, 
+        Modified: false, 
+        Phaseout: false,
+        modification_description: '',
+        modification_reason: '',
+        responsible_engineer: user?.name || '', 
+
+        // Design & Analysis
+        drawing_2d: false, 
+        drawing_3d: true,
+        fea: 'No', 
+        test_reports: 'No', 
+        mandatory: 'No',
+
+        // Impact (Consolidated Section)
         doc_internal: [], 
         doc_external: [],
-
-        compliance_adr: false, compliance_intl: false, compliance_others: '',
+        compliance_adr: false, 
+        compliance_intl: false, 
+        compliance_others: '',
         cars_delivered: 'No',
-
-        vehicle_ev: true, vehicle_marrua: false,
-        inform_sw: false, inform_telematics: false,
-        
+        vehicle_ev: true, 
+        vehicle_marrua: false,
+        inform_sw: false, 
+        inform_telematics: false,
         stock_action: [], 
         stock_details: '',
 
-        supplier_name: '', cost_notes: '',
-        approval_person: ''
+        // Supplier & Costs
+        supplier_name: '', 
+        cost_notes: '',
+
+        // Approval Workflow
+        approval_person: '',
+        date: new Date().toISOString().split('T')[0]
     });
+
+    // Auto-fill Responsible Engineer from Auth User
+    useEffect(() => {
+        if (user && user.name) {
+            setFormData(prev => ({ ...prev, responsible_engineer: user.name }));
+        }
+    }, [user]);
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/item-master`, { credentials: 'include' })
@@ -67,7 +96,7 @@ const EngineeringReleaseForm = ({ user }) => {
             }));
         };
         fetchRevision();
-    }, [formData.project, formData.system, formData.item, formData.finish]);
+    }, [formData.project, formData.system, formData.item, formData.finish]); 
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -88,7 +117,6 @@ const EngineeringReleaseForm = ({ user }) => {
         setResults([]); 
     };
 
-    // RESTORED CHECKLIST LOGIC
     const handleCheckList = (field, value) => {
         setFormData(prev => {
             const current = prev[field] || [];
@@ -97,7 +125,6 @@ const EngineeringReleaseForm = ({ user }) => {
         });
     };
 
-    // RESTORED SUBMIT LOGIC & ROUTING
     const handleSubmit = async (e) => {
         e.preventDefault();
         const fullPN = `${formData.project}.${formData.system}.${formData.item}.${formData.finish}.${formData.rev}.${formData.code}`;
@@ -109,7 +136,6 @@ const EngineeringReleaseForm = ({ user }) => {
             credentials: 'include'
         });
         
-        // Routes to the requested Review volume
         navigate('/portal?status=Review');
     };
 
@@ -123,7 +149,7 @@ const EngineeringReleaseForm = ({ user }) => {
             <form onSubmit={handleSubmit} className="white-card">
                 
                 {/* PART IDENTIFIER STRUCTURE */}
-                <div className="form-section-header">Part Identifier Structure</div>
+                <div className="form-section-header">Part Identifier</div>
                 <div className="identifier-row">
                     <div className="identifier-segment-box">
                         <label className="identifier-label">Product</label>
@@ -182,6 +208,54 @@ const EngineeringReleaseForm = ({ user }) => {
                     </p>
                 </div>
 
+                {/* PART INFORMATION */}
+                <div className="form-section-header">Part Information</div>
+                <div className="form-grid-2">
+                    <div className="field-box">
+                        <label className="main-label">Part Name</label>
+                        <input type="text" placeholder="Enter part name..." value={formData.part_name} onChange={e => setFormData({...formData, part_name: e.target.value})} />
+                    </div>
+                    <div className="field-box">
+                        <label className="main-label">Part Number</label>
+                        <input type="text" placeholder="Enter part number..." value={formData.part_number} onChange={e => setFormData({...formData, part_number: e.target.value})} />
+                    </div>
+                    <div className="field-box">
+                        <label className="main-label">Project Code</label>
+                        <input type="text" value={formData.project} readOnly className="identifier-input-clean id-readonly" style={{ fontWeight: '600' }} />
+                    </div>
+                    <div className="field-box">
+                        <label className="main-label">Part Type</label>
+                        <div className="vertical-checkbox-group">
+                            <label><input type="checkbox" checked={formData.Assembly} onChange={e => setFormData({...formData, Assembly: e.target.checked})} /> Assembly</label>
+                            <label><input type="checkbox" checked={formData.Sourced_Finished} onChange={e => setFormData({...formData, Sourced_Finished: e.target.checked})} /> Sourced - Finished</label>
+                            <label><input type="checkbox" checked={formData.Sourced_Unfinished} onChange={e => setFormData({...formData, Sourced_Unfinished: e.target.checked})} /> Sourced - Unfinished</label>
+                        </div>                
+                    </div>
+                </div>
+            
+                {/* MODIFICATION DETAILS */}
+                <div className='form-section-header'>Modification Details</div>
+                <div className='form-grid-2'>
+                    <div className='field-box'>
+                        <label className='main-label'>Modification Type</label>
+                        <label><input type="checkbox" checked={formData.New} onChange={e => setFormData({...formData, New: e.target.checked})} /> New</label>
+                        <label><input type="checkbox" checked={formData.Modified} onChange={e => setFormData({...formData, Modified: e.target.checked})} /> Modified</label>
+                        <label><input type="checkbox" checked={formData.Phaseout} onChange={e => setFormData({...formData, Phaseout: e.target.checked})} /> Phaseout</label>
+                    </div>
+                    <div className='field-box'>
+                        <label className='main-label'>Modification Description</label>
+                        <textarea placeholder='Enter modification description...' value={formData.modification_description} onChange={e => setFormData({...formData, modification_description: e.target.value})} />
+                    </div>
+                    <div className='field-box'>
+                        <label className='main-label'>Modification Reason</label>
+                        <textarea placeholder='Enter modification reason...' value={formData.modification_reason} onChange={e => setFormData({...formData, modification_reason: e.target.value})} />
+                    </div>
+                    <div className='field-box'> 
+                        <label className='main-label'>Responsible Engineer </label>
+                        <input type='text' value={formData.responsible_engineer} readOnly style={{ background: '#f0f0f0' }} />
+                    </div>
+                </div>      
+
                 {/* DESIGN & ANALYSIS */}
                 <div className="form-section-header">Design & Analysis</div>
                 <div className="form-grid-4">
@@ -206,80 +280,51 @@ const EngineeringReleaseForm = ({ user }) => {
                     })}
                 </div>
 
-                {/* DOCUMENTATION AFFECTED */}
-                <div className="form-section-header">Documentation Affected</div>
+                {/* CONSOLIDATED IMPACT SECTION */}
+                <div className="form-section-header">Impact</div>
                 <div className="form-grid-2">
+                    {/* Documentation */}
                     <div className="field-box">
-                        <label className="main-label">Internal</label>
+                        <label className="main-label">Documentation Affected</label>
                         <div className="vertical-checkbox-group">
+                            <p style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '5px 0' }}>Internal</p>
                             {['Workshop Manual', 'Technical Specification'].map(item => (
                                 <label key={item}>
                                     <input type="checkbox" checked={formData.doc_internal.includes(item)} onChange={() => handleCheckList('doc_internal', item)} /> {item}
                                 </label>
                             ))}
-                        </div>
-                    </div>
-                    <div className="field-box">
-                        <label className="main-label">External</label>
-                        <div className="vertical-checkbox-group">
-                            {['Parts Catalogue', 'Operator’s Handbook', 'Maintenance Supplement', 'Training Material', 'Documentation'].map(item => (
+                            <p style={{ fontSize: '0.8rem', fontWeight: 'bold', margin: '10px 0 5px' }}>External</p>
+                            {['Parts Catalogue', 'Operator’s Handbook', 'Maintenance Supplement', 'Training Material/Documentation'].map(item => (
                                 <label key={item}>
                                     <input type="checkbox" checked={formData.doc_external.includes(item)} onChange={() => handleCheckList('doc_external', item)} /> {item}
                                 </label>
                             ))}
                         </div>
                     </div>
-                </div>
 
-                {/* REGULATORY & DELIVERY */}
-                <div className="form-section-header">Regulatory & Delivery</div>
-                <div className="form-grid-2">
+                    {/* Regulatory & Stock */}
                     <div className="field-box">
-                        <label className="main-label">Compliance</label>
-                        <div className="vertical-checkbox-group">
+                        <label className="main-label">Compliance & Regulatory</label>
+                        <div className="vertical-checkbox-group" style={{ marginBottom: '20px' }}>
                             <label><input type="checkbox" checked={formData.compliance_adr} onChange={e => setFormData({...formData, compliance_adr: e.target.checked})} /> ADR (Australian Design Rules)</label>
                             <label><input type="checkbox" checked={formData.compliance_intl} onChange={e => setFormData({...formData, compliance_intl: e.target.checked})} /> International Standards</label>
-                            <div style={{marginTop: '10px'}}>
-                                <input type="text" placeholder="Other (specify)..." value={formData.compliance_others} onChange={e => setFormData({...formData, compliance_others: e.target.value})} />
-                            </div>
+                            <input type="text" placeholder="Other Compliance..." value={formData.compliance_others} onChange={e => setFormData({...formData, compliance_others: e.target.value})} style={{ marginTop: '5px' }} />
                         </div>
-                    </div>
-                    <div className="field-box">
-                        <label className="main-label">Cars Delivered</label>
-                        <div className="vertical-checkbox-group">
-                            <label><input type="radio" name="delivered" checked={formData.cars_delivered === 'Yes'} onChange={() => setFormData({...formData, cars_delivered: 'Yes'})} /> Yes</label>
-                            <label><input type="radio" name="delivered" checked={formData.cars_delivered === 'No'} onChange={() => setFormData({...formData, cars_delivered: 'No'})} /> No</label>
-                        </div>
-                    </div>
-                </div>
 
-                {/* VEHICLE & STOCK */}
-                <div className="form-section-header">Vehicle & Stock Management</div>
-                <div className="form-grid-25-25-50">
-                    <div className="field-box">
-                        <label className="main-label">Affected Vehicle Type</label>
+                        <label className="main-label">Vehicle & Stock Management</label>
                         <div className="vertical-checkbox-group">
                             <label><input type="checkbox" checked={formData.vehicle_ev} onChange={e => setFormData({...formData, vehicle_ev: e.target.checked})} /> Bortana EV</label>
                             <label><input type="checkbox" checked={formData.vehicle_marrua} onChange={e => setFormData({...formData, vehicle_marrua: e.target.checked})} /> Marrua</label>
+                            <div style={{ marginTop: '10px' }}>
+                                <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Stock Action</p>
+                                {['Need Update', 'Take Away', 'Transform', 'Finish Stock'].map(s => (
+                                    <label key={s}>
+                                        <input type="checkbox" checked={formData.stock_action.includes(s)} onChange={() => handleCheckList('stock_action', s)} /> {s}
+                                    </label>
+                                ))}
+                                <textarea placeholder="Stock Details..." value={formData.stock_details} onChange={e => setFormData({...formData, stock_details: e.target.value})} style={{ marginTop: '10px' }} />
+                            </div>
                         </div>
-                    </div>
-                    <div className="field-box">
-                        <label className="main-label">Inform</label>
-                        <div className="vertical-checkbox-group">
-                            <label><input type="checkbox" checked={formData.inform_sw} onChange={e => setFormData({...formData, inform_sw: e.target.checked})} /> Software Team</label>
-                            <label><input type="checkbox" checked={formData.inform_telematics} onChange={e => setFormData({...formData, inform_telematics: e.target.checked})} /> Telematics Team</label>
-                        </div>
-                    </div>
-                    <div className="field-box">
-                        <label className="main-label">Stock Action</label>
-                        <div className="vertical-checkbox-group" style={{marginBottom: '15px'}}>
-                            {['Need Update', 'Take Away', 'Transform', 'Finish Stock'].map(s => (
-                                <label key={s}>
-                                    <input type="checkbox" checked={formData.stock_action.includes(s)} onChange={() => handleCheckList('stock_action', s)} /> {s}
-                                </label>
-                            ))}
-                        </div>
-                        <textarea placeholder="Stock Details..." value={formData.stock_details} onChange={e => setFormData({...formData, stock_details: e.target.value})} />
                     </div>
                 </div>
 
@@ -287,7 +332,7 @@ const EngineeringReleaseForm = ({ user }) => {
                 <div className="form-section-header">Supplier & Costs</div>
                 <div className="form-grid-2">
                     <div className="field-box">
-                        <label className="main-label">Supplier Name / Type</label>
+                        <label className="main-label">Supplier Name</label>
                         <input type="text" placeholder="Enter supplier..." value={formData.supplier_name} onChange={e => setFormData({...formData, supplier_name: e.target.value})} />
                     </div>
                     <div className="field-box">
@@ -300,15 +345,16 @@ const EngineeringReleaseForm = ({ user }) => {
                 <div className="form-section-header">Approval Workflow</div>
                 <div className="form-grid-2">
                     <div className="field-box">
-                        <label className="main-label">Final Approval</label>
+                        <label className="main-label">Reviewer</label>
                         <select value={formData.approval_person} onChange={e => setFormData({...formData, approval_person: e.target.value})}>
                             <option value="">Select Approver</option>
+                            <option value="Shiying Wu">Shiying Wu</option>
                             <option value="David Lee">David Lee</option>
                             <option value="Eva Green">Eva Green</option>
                         </select>
                     </div>
-                    <div className="field-box">
-                        <label className="main-label">Date of Approval</label>
+                    <div className="field-box"> 
+                        <label className="main-label">Date</label>
                         <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                     </div>
                 </div>

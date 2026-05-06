@@ -144,37 +144,69 @@ app.get('/api/check-revision', auth.isAuthenticated, (req, res) => {
 app.post('/api/components', auth.isAuthenticated, (req, res) => {
     const data = req.body;
     const user = req.session.user.name;
-    const query = `INSERT INTO components (
-        part_number, name, part_type, mod_type, mod_description, responsible_engineer, 
-        reason, drawing_2d, drawing_3d, compliance_adr, vehicle_ev, vehicle_marrua, 
-        stock_action, finishing_stage, revision, bortana_code, created_by
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
+    // 1. We must explicitly list EVERY column we want to save
+    const query = `INSERT INTO components (
+        part_number, name, part_type, mod_type, mod_description, 
+        responsible_engineer, reason, drawing_2d, drawing_3d, 
+        fea, test_reports, mandatory,
+        doc_internal, doc_external, compliance_adr, compliance_intl, 
+        compliance_others, cars_delivered, vehicle_ev, vehicle_marrua, 
+        inform_sw, inform_telematics, stock_action, stock_details,
+        supplier_name, cost_notes, approval_person, approval_date,
+        finishing_stage, revision, bortana_code, status, created_by
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    // 2. We must map the incoming JSON data to the columns
+    // NOTE: We use JSON.stringify for arrays because SQLite only stores text/numbers
     const params = [
-        data.part_number, data.name, data.part_type, data.mod_type, data.mod_description, user, 
-        data.reason, data.drawing_2d ? 1 : 0, data.drawing_3d ? 1 : 0, 
-        data.compliance_adr ? 1 : 0, data.vehicle_ev ? 1 : 0, data.vehicle_marrua ? 1 : 0, 
-        data.stock_action, data.finish, data.rev, data.code, user
+        data.part_number, 
+        data.part_name, // Mapping 'part_name' from frontend to 'name' in DB
+        data.part_type, 
+        data.mod_type, 
+        data.modification_description, 
+        data.responsible_engineer || user, 
+        data.modification_reason, 
+        data.drawing_2d ? 1 : 0, 
+        data.drawing_3d ? 1 : 0,
+        data.fea, 
+        data.test_reports, 
+        data.mandatory,
+        JSON.stringify(data.doc_internal || []), 
+        JSON.stringify(data.doc_external || []),
+        data.compliance_adr ? 1 : 0, 
+        data.compliance_intl ? 1 : 0, 
+        data.compliance_others, 
+        data.cars_delivered, 
+        data.vehicle_ev ? 1 : 0, 
+        data.vehicle_marrua ? 1 : 0, 
+        data.inform_sw ? 1 : 0, 
+        data.inform_telematics ? 1 : 0,
+        JSON.stringify(data.stock_action || []), 
+        data.stock_details,
+        data.supplier_name, 
+        data.cost_notes, 
+        data.approval_person, 
+        data.date, // The date from the approval workflow section
+        data.finish, 
+        data.rev, 
+        data.code, 
+        'Review', // Initial status
+        user      // created_by
     ];
 
     db.run(query, params, function(err) {
-        if (err) return res.status(400).json({ error: "Duplicate Part Number." });
-        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, 'Created', 'Engineering release submitted.')`, [this.lastID, user]);
-        res.status(201).json({ id: this.lastID });
-    });
-});
-
-app.post('/api/approve/:id', auth.isAuthenticated, (req, res) => {
-    const { id } = req.params;
-    const { comment } = req.body;
-    const user = req.session.user.name;
-    db.run(`UPDATE components SET status = 'Approved' WHERE id = ?`, [id], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (comment) {
-            db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, 'Comment', ?)`, [id, user, comment]);
+        if (err) {
+            console.error("DB Insert Error:", err.message);
+            return res.status(400).json({ error: "Could not save release. Check for duplicate Part Number." });
         }
-        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, 'Approved', 'Status changed to Approved')`, [id, user]);
-        res.json({ success: true });
+        
+        // Log the creation in activity history
+        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) 
+                VALUES (?, ?, 'Created', 'Engineering release submitted for review.')`, 
+                [this.lastID, user]);
+
+        res.status(201).json({ id: this.lastID });
     });
 });
 
@@ -205,15 +237,61 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS components (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         part_number TEXT UNIQUE NOT NULL, 
-        name TEXT, part_type TEXT, mod_type TEXT, mod_description TEXT, responsible_engineer TEXT, 
-        reason TEXT, drawing_2d BOOLEAN, drawing_3d BOOLEAN, compliance_adr BOOLEAN, 
-        vehicle_ev BOOLEAN, vehicle_marrua BOOLEAN, stock_action TEXT, finishing_stage TEXT, 
-        revision TEXT, bortana_code TEXT, status TEXT DEFAULT 'Review', 
-        comment TEXT, created_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        name TEXT, 
+        part_type TEXT, 
+        
+        -- Modification Details
+        mod_type TEXT, 
+        mod_description TEXT, 
+        responsible_engineer TEXT, 
+        reason TEXT, 
+
+        -- Design & Analysis
+        drawing_2d BOOLEAN, 
+        drawing_3d BOOLEAN, 
+        fea TEXT, 
+        test_reports TEXT, 
+        mandatory TEXT,
+
+        -- Consolidated Impact Section
+        doc_internal TEXT,   
+        doc_external TEXT,   
+        compliance_adr BOOLEAN, 
+        compliance_intl BOOLEAN, 
+        compliance_others TEXT,
+        cars_delivered TEXT,
+        vehicle_ev BOOLEAN, 
+        vehicle_marrua BOOLEAN, 
+        inform_sw BOOLEAN, 
+        inform_telematics BOOLEAN,
+        stock_action TEXT,    
+        stock_details TEXT,
+
+        -- Supplier & Costs
+        supplier_name TEXT,
+        cost_notes TEXT,
+
+        -- Approval Workflow
+        approval_person TEXT,
+        approval_date TEXT,   -- Renamed 'date' to 'approval_date' for clarity
+
+        -- System Fields
+        revision TEXT, 
+        bortana_code TEXT, 
+        status TEXT DEFAULT 'Review', 
+        comment TEXT, 
+        created_by TEXT, 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => { if (!err) seedDatabaseIfNeeded(); });
+
+   
     db.run(`CREATE TABLE IF NOT EXISTS activity_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, component_id INTEGER, user_name TEXT, 
-        action TEXT, details TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        component_id INTEGER, 
+        user_name TEXT, 
+        action TEXT, 
+        details TEXT, 
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
         FOREIGN KEY(component_id) REFERENCES components(id)
     )`);
 });
