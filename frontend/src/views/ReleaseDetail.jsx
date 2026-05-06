@@ -3,148 +3,179 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-const ReleaseDetail = () => {
+const ReleaseDetail = ({ user }) => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [data, setData] = useState(null);
+    const [newComment, setNewComment] = useState("");
 
     useEffect(() => {
         fetch(`${API_BASE_URL}/releases/${id}`, { credentials: 'include' })
             .then(res => res.json())
             .then(val => setData(val))
-            .catch(err => console.error("Error fetching release:", err));
+            .catch(err => console.error("Fetch error:", err));
     }, [id]);
 
-    if (!data) return <div className="page-container">Loading engineering record...</div>;
+    const handleAction = async (action) => {
+        const statusMap = { 'Approve': 'Approved', 'Reject': 'Rejected' };
+        const payload = {
+            comment: newComment,
+            status: statusMap[action] || null
+        };
 
-    const parseList = (str) => {
-        try { return JSON.parse(str || "[]"); } 
-        catch (e) { return []; }
+        await fetch(`${API_BASE_URL}/approve/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            credentials: 'include'
+        });
+        window.location.reload();
     };
 
+    if (!data) return <div className="page-container">Loading Engineering Record...</div>;
+
+    const parseList = (str) => { try { return JSON.parse(str || "[]"); } catch (e) { return []; } };
+
     return (
-        <div className="page-container">
-            {/* TECHNICAL HEADER */}
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <h1 style={{ fontSize: '3rem', margin: 0, color: 'var(--text-h)' }}>{data.part_number}</h1>
-                <span className={`status-tag status-${data.status?.toLowerCase()}`} style={{ fontSize: '1.2rem', padding: '10px 30px' }}>
-                    {data.status}
-                </span>
+        <div className="page-container" style={{ maxWidth: '1400px' }}>
+            
+            {/* 1. TOP NAV & LIFECYCLE */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '25px', background: '#fff', padding: '15px 25px', borderRadius: '8px', boxShadow: 'var(--shadow)' }}>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    <button onClick={() => navigate(`/releases/${data.id - 1}`)} className="nav-icon-btn">← Prev Case</button>
+                    <div className="lifecycle-bar">
+                        <div className="step active">Created</div>
+                        <div className="line"></div>
+                        <div className={`step ${data.status === 'Review' ? 'current' : 'active'}`}>Review</div>
+                        <div className="line"></div>
+                        <div className={`step ${data.status === 'Approved' ? 'approved' : (data.status === 'Rejected' ? 'rejected' : '')}`}>
+                            {data.status === 'Rejected' ? 'Rejected' : 'Released'}
+                        </div>
+                    </div>
+                    <button onClick={() => navigate(`/releases/${data.id + 1}`)} className="nav-icon-btn">Next Case →</button>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn-red" onClick={() => handleAction('Reject')}>Reject</button>
+                    <button className="btn-green" onClick={() => handleAction('Approve')}>Approve Release</button>
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '30px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '25px', alignItems: 'start' }}>
                 
-                {/* LEFT COLUMN: THE ENGINEERING RECORD */}
-                <div style={{ border: '1px solid #ddd', background: '#fff', boxShadow: 'var(--shadow)', borderRadius: '8px' }}>
-                    <div className="form-section-header">Engineering Record</div>
-                    
-                    <div style={{ padding: '30px' }}>
-                        <div style={{ marginBottom: '20px' }}>
-                            <h2 style={{ margin: '0 0 5px 0' }}>{data.name}</h2>
-                            <p style={{ color: '#666' }}>Created by: <strong>{data.created_by || 'System'}</strong></p>
+                {/* 2. RECORD SESSION (LEFT COLUMN - MIRRORS FORM) */}
+                <div className="white-card" style={{ padding: 0 }}>
+                    <div style={{ padding: '30px', textAlign: 'center', borderBottom: '1px solid #eee' }}>
+                        <h1 style={{ fontSize: '2.8rem', margin: 0, letterSpacing: '-1px' }}>{data.part_number}</h1>
+                        <div style={{ marginTop: '10px' }}>
+                            <span className={`status-tag status-${data.status?.toLowerCase()}`} style={{ fontSize: '1rem', padding: '5px 20px' }}>
+                                {data.status}
+                            </span>
                         </div>
+                    </div>
 
-                        <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
-
-                        {/* 1. PART INFORMATION */}
-                        <h3 className="detail-sub-header">1. Part Information</h3>
-                        <div className="detail-grid">
-                            <DetailItem label="Part Name" value={data.name} />
-                            <DetailItem label="Part Number" value={data.part_number} />
-                            <DetailItem label="Project Code" value="6040" />
-                            <DetailItem label="Part Type" value={[
+                    <div style={{ padding: '40px' }}>
+                        
+                        {/* SECTION 1: PART INFORMATION */}
+                        <div className="form-section-header">1. Part Information</div>
+                        <div className="form-grid-2">
+                            <DetailBox label="Part Name" value={data.name} />
+                            <DetailBox label="Project Code" value="6040" />
+                            <DetailBox label="Part Type" value={[
                                 data.Assembly ? 'Assembly' : null,
                                 data.Sourced_Finished ? 'Sourced-Finished' : null,
                                 data.Sourced_Unfinished ? 'Sourced-Unfinished' : null
                             ].filter(Boolean).join(', ') || 'N/A'} />
                         </div>
 
-                        {/* 2. MODIFICATION DETAILS */}
-                        <h3 className="detail-sub-header">2. Modification Details</h3>
-                        <div className="detail-grid">
-                            <DetailItem label="Modification Type" value={[
+                        {/* SECTION 2: MODIFICATION DETAILS */}
+                        <div className="form-section-header" style={{ marginTop: '40px' }}>2. Modification Details</div>
+                        <div className="form-grid-2">
+                            <DetailBox label="Modification Type" value={[
                                 data.New ? 'New' : null,
                                 data.Modified ? 'Modified' : null,
                                 data.Phaseout ? 'Phaseout' : null
                             ].filter(Boolean).join(', ') || 'N/A'} />
-                            <DetailItem label="Responsible Engineer" value={data.responsible_engineer} />
-                        </div>
-                        <DetailItem label="Modification Description" value={data.mod_description} isFullWidth />
-                        <DetailItem label="Modification Reason" value={data.reason} isFullWidth />
-
-                        {/* 3. DESIGN & ANALYSIS */}
-                        <h3 className="detail-sub-header">3. Design & Analysis</h3>
-                        <div className="detail-grid">
-                            <DetailItem label="2D Drawing" value={data.drawing_2d ? 'Yes' : 'No'} />
-                            <DetailItem label="3D Model" value={data.drawing_3d ? 'Yes' : 'No'} />
-                            <DetailItem label="FEA" value={data.fea} />
-                            <DetailItem label="Test Reports" value={data.test_reports} />
-                            <DetailItem label="Mandatory" value={data.mandatory} />
+                            <DetailBox label="Responsible Engineer" value={data.responsible_engineer} />
+                            <DetailBox label="Description" value={data.mod_description} fullWidth />
+                            <DetailBox label="Reason" value={data.reason} fullWidth />
                         </div>
 
-                        {/* 4. IMPACT */}
-                        <h3 className="detail-sub-header">4. Impact Analysis</h3>
-                        <div className="detail-grid">
-                            <DetailItem label="Internal Docs" value={parseList(data.doc_internal).join(', ') || 'None'} />
-                            <DetailItem label="External Docs" value={parseList(data.doc_external).join(', ') || 'None'} />
-                            <DetailItem label="ADR Compliance" value={data.compliance_adr ? 'Yes' : 'No'} />
-                            <DetailItem label="Vehicle Type" value={[
-                                data.vehicle_ev ? 'Bortana EV' : null,
-                                data.vehicle_marrua ? 'Marrua' : null
-                            ].filter(Boolean).join(', ') || 'None'} />
+                        {/* SECTION 3: DESIGN & ANALYSIS */}
+                        <div className="form-section-header" style={{ marginTop: '40px' }}>3. Design & Analysis</div>
+                        <div className="form-grid-4">
+                            <DetailBox label="Drawing" value={`${data.drawing_2d ? '2D ' : ''}${data.drawing_3d ? '3D' : ''}` || 'None'} />
+                            <DetailBox label="FEA" value={data.fea} />
+                            <DetailBox label="Test Reports" value={data.test_reports} />
+                            <DetailBox label="Mandatory" value={data.mandatory} />
                         </div>
 
-                        {/* 5. SUPPLIER & COSTS */}
-                        <h3 className="detail-sub-header">5. Supplier & Costs</h3>
-                        <div className="detail-grid">
-                            <DetailItem label="Supplier Name" value={data.supplier_name} />
-                            <DetailItem label="Cost Notes" value={data.cost_notes} />
+                        {/* SECTION 4: IMPACT */}
+                        <div className="form-section-header" style={{ marginTop: '40px' }}>4. Impact Analysis</div>
+                        <div className="form-grid-2">
+                            <DetailBox label="Internal Docs" value={parseList(data.doc_internal).join(', ') || 'None'} />
+                            <DetailBox label="External Docs" value={parseList(data.doc_external).join(', ') || 'None'} />
+                            <DetailBox label="Compliance" value={`${data.compliance_adr ? 'ADR ' : ''}${data.compliance_intl ? 'Intl ' : ''}${data.compliance_others || ''}`} />
+                            <DetailBox label="Vehicles" value={`${data.vehicle_ev ? 'EV ' : ''}${data.vehicle_marrua ? 'Marrua' : ''}`} />
+                            <DetailBox label="Stock Action" value={parseList(data.stock_action).join(', ') || 'No Action'} />
+                            <DetailBox label="Stock Details" value={data.stock_details} fullWidth />
                         </div>
 
-                        {/* 6. REVIEW & APPROVAL + COMMENTS */}
-                        <h3 className="detail-sub-header">6. Review & Approval</h3>
-                        <div className="detail-grid" style={{ marginBottom: '20px' }}>
-                            <DetailItem label="Assigned Reviewer" value={data.approval_person} />
-                            <DetailItem label="Planned Date" value={data.approval_date} />
+                        {/* SECTION 5: SUPPLIER & COSTS */}
+                        <div className="form-section-header" style={{ marginTop: '40px' }}>5. Supplier & Costs</div>
+                        <div className="form-grid-2">
+                            <DetailBox label="Supplier Name" value={data.supplier_name} />
+                            <DetailBox label="Cost Notes" value={data.cost_notes} />
                         </div>
-                        
-                        {/* THE DEDICATED COMMENT SESSION */}
-                        <div style={{ marginTop: '10px' }}>
-                            <h4 style={{ color: '#888', textTransform: 'uppercase', fontSize: '0.7rem', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                                Engineering Comments / Reviewer Feedback
-                            </h4>
-                            <div style={{ 
-                                padding: '20px', 
-                                background: '#fff9e6', // Subtle yellow to highlight feedback
-                                border: '1px solid var(--bortana-yellow)', 
-                                borderRadius: '6px',
-                                minHeight: '100px',
-                                fontSize: '0.95rem',
-                                color: '#444',
-                                lineHeight: '1.6',
-                                whiteSpace: 'pre-wrap'
-                            }}>
-                                {data.comment || "No feedback has been logged for this record yet."}
-                            </div>
+
+                        {/* SECTION 6: APPROVAL WORKFLOW */}
+                        <div className="form-section-header" style={{ marginTop: '40px' }}>6. Approval Workflow</div>
+                        <div className="form-grid-2">
+                            <DetailBox label="Reviewer" value={data.approval_person} />
+                            <DetailBox label="Planned Date" value={data.approval_date} />
                         </div>
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: TIMELINE */}
-                <div>
-                    <div style={{ border: '1px solid #ddd', background: '#fff', borderRadius: '8px', padding: '20px', position: 'sticky', top: '20px' }}>
-                        <h3 style={{ marginTop: 0, borderBottom: '2px solid var(--bortana-yellow)', paddingBottom: '10px' }}>Activity Storyline</h3>
-                        <div className="timeline" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                            {(data.storyline || []).map((log, idx) => (
-                                <div key={idx} style={{ marginBottom: '20px', paddingLeft: '15px', borderLeft: '2px solid #eee' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#999' }}>{new Date(log.timestamp).toLocaleString()}</div>
-                                    <div style={{ fontWeight: 'bold', color: '#333', fontSize: '0.9rem' }}>{log.action}</div>
-                                    <div style={{ fontSize: '0.85rem', color: '#555' }}>{log.details}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#888', textAlign: 'right' }}>— {log.user_name}</div>
+                {/* 3. DISCUSSION & CHAT (RIGHT COLUMN) */}
+                <div className="white-card" style={{ display: 'flex', flexDirection: 'column', height: '850px', padding: 0, position: 'sticky', top: '20px' }}>
+                    <div className="form-section-header" style={{ background: 'var(--bortana-yellow)', color: '#000' }}>Project Discussion</div>
+                    
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#f4f4f4' }}>
+                        {(data.storyline || []).map((msg, i) => (
+                            <div key={i} style={{ 
+                                marginBottom: '15px', 
+                                marginLeft: msg.user_name === user?.name ? '40px' : '0',
+                                marginRight: msg.user_name === user?.name ? '0' : '40px'
+                            }}>
+                                <div style={{ fontSize: '0.7rem', color: '#888', marginBottom: '3px', textAlign: msg.user_name === user?.name ? 'right' : 'left' }}>
+                                    <strong>{msg.user_name}</strong> • {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
-                            ))}
-                        </div>
-                        <button className="btn-yellow" style={{ width: '100%', marginTop: '20px' }} onClick={() => navigate('/portal')}>Return to Portal</button>
+                                <div style={{ 
+                                    padding: '12px 16px', 
+                                    borderRadius: '12px', 
+                                    background: msg.user_name === user?.name ? '#fff9c4' : '#fff',
+                                    border: '1px solid #ddd',
+                                    fontSize: '0.9rem',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                                    position: 'relative'
+                                }}>
+                                    {msg.details}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ padding: '20px', borderTop: '1px solid #eee', background: '#fff' }}>
+                        <textarea 
+                            placeholder="Add a comment or explain your decision..." 
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd', padding: '12px', minHeight: '100px', marginBottom: '10px', fontFamily: 'inherit' }}
+                        />
+                        <button className="btn-yellow" style={{ width: '100%', padding: '12px' }} onClick={() => handleAction('Comment')}>
+                            Post Comment
+                        </button>
                     </div>
                 </div>
             </div>
@@ -152,17 +183,22 @@ const ReleaseDetail = () => {
     );
 };
 
-// Reusable item for clean metadata display
-const DetailItem = ({ label, value, isFullWidth = false }) => (
-    <div style={{ marginBottom: '15px', gridColumn: isFullWidth ? '1 / -1' : 'auto' }}>
-        <h4 style={{ color: '#888', textTransform: 'uppercase', fontSize: '0.7rem', marginBottom: '4px' }}>{label}</h4>
+// Internal sub-component for the View-Only Record
+const DetailBox = ({ label, value, fullWidth }) => (
+    <div style={{ marginBottom: '20px', gridColumn: fullWidth ? '1 / -1' : 'auto' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', color: '#999', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.5px' }}>
+            {label}
+        </label>
         <div style={{ 
-            fontWeight: '500', 
+            padding: '12px 15px', 
+            background: '#fcfcfc', 
+            border: '1px solid #efefef', 
+            borderRadius: '6px',
             color: '#333',
-            background: isFullWidth ? '#f9f9f9' : 'transparent',
-            padding: isFullWidth ? '10px' : '0',
-            border: isFullWidth ? '1px solid #eee' : 'none',
-            borderRadius: '4px'
+            fontSize: '0.95rem',
+            minHeight: '44px',
+            lineHeight: '1.5',
+            whiteSpace: 'pre-wrap'
         }}>
             {value || '—'}
         </div>

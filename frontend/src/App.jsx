@@ -50,9 +50,11 @@ function App() {
             {/* The New Release Form */}
             <Route path="/create" element={user ? <EngineeringReleaseForm user={user} /> : <Navigate to="/" />} />
             
-            <Route path="/portal" element={user ? <ReleasePortal /> : <Navigate to="/" />} />
-            
-            <Route path="/release/:id" element={user ? <ReleaseDetail /> : <Navigate to="/" />} />
+            {/* The Release Management Portal */}
+            <Route path="/portal" element={user ? <ReleasePortal user={user} /> : <Navigate to="/" />} />
+
+            {/* The Detailed Engineering Record & Discussion */}
+            <Route path="/release/:id" element={user ? <ReleaseDetail user={user} /> : <Navigate to="/" />} />
             
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

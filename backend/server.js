@@ -140,12 +140,11 @@ app.get('/api/check-revision', auth.isAuthenticated, (req, res) => {
     });
 });
 
-// --- CREATION & APPROVAL ---
+// --- CREATION, COMMENTING & APPROVAL ---
 app.post('/api/components', auth.isAuthenticated, (req, res) => {
     const data = req.body;
     const user = req.session.user.name;
 
-    // 1. We must explicitly list EVERY column we want to save
     const query = `INSERT INTO components (
         part_number, name, part_type, mod_type, mod_description, 
         responsible_engineer, reason, drawing_2d, drawing_3d, 
@@ -157,56 +156,58 @@ app.post('/api/components', auth.isAuthenticated, (req, res) => {
         finishing_stage, revision, bortana_code, status, created_by
     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-    // 2. We must map the incoming JSON data to the columns
-    // NOTE: We use JSON.stringify for arrays because SQLite only stores text/numbers
     const params = [
-        data.part_number, 
-        data.part_name, // Mapping 'part_name' from frontend to 'name' in DB
-        data.part_type, 
-        data.mod_type, 
-        data.modification_description, 
-        data.responsible_engineer || user, 
-        data.modification_reason, 
-        data.drawing_2d ? 1 : 0, 
-        data.drawing_3d ? 1 : 0,
-        data.fea, 
-        data.test_reports, 
-        data.mandatory,
-        JSON.stringify(data.doc_internal || []), 
-        JSON.stringify(data.doc_external || []),
-        data.compliance_adr ? 1 : 0, 
-        data.compliance_intl ? 1 : 0, 
-        data.compliance_others, 
-        data.cars_delivered, 
-        data.vehicle_ev ? 1 : 0, 
-        data.vehicle_marrua ? 1 : 0, 
-        data.inform_sw ? 1 : 0, 
-        data.inform_telematics ? 1 : 0,
-        JSON.stringify(data.stock_action || []), 
-        data.stock_details,
-        data.supplier_name, 
-        data.cost_notes, 
-        data.approval_person, 
-        data.date, // The date from the approval workflow section
-        data.finish, 
-        data.rev, 
-        data.code, 
-        'Review', // Initial status
-        user      // created_by
+        data.part_number, data.part_name, data.part_type, data.mod_type, data.modification_description, 
+        data.responsible_engineer || user, data.modification_reason, data.drawing_2d ? 1 : 0, data.drawing_3d ? 1 : 0,
+        data.fea, data.test_reports, data.mandatory,
+        JSON.stringify(data.doc_internal || []), JSON.stringify(data.doc_external || []),
+        data.compliance_adr ? 1 : 0, data.compliance_intl ? 1 : 0, data.compliance_others, 
+        data.cars_delivered, data.vehicle_ev ? 1 : 0, data.vehicle_marrua ? 1 : 0, 
+        data.inform_sw ? 1 : 0, data.inform_telematics ? 1 : 0,
+        JSON.stringify(data.stock_action || []), data.stock_details,
+        data.supplier_name, data.cost_notes, data.approval_person, data.date, 
+        data.finish, data.rev, data.code, 'Review', user
     ];
 
     db.run(query, params, function(err) {
-        if (err) {
-            console.error("DB Insert Error:", err.message);
-            return res.status(400).json({ error: "Could not save release. Check for duplicate Part Number." });
-        }
-        
-        // Log the creation in activity history
-        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) 
-                VALUES (?, ?, 'Created', 'Engineering release submitted for review.')`, 
-                [this.lastID, user]);
-
+        if (err) return res.status(400).json({ error: "Duplicate Part Number." });
+        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, 'Created', 'Engineering release submitted.')`, [this.lastID, user]);
         res.status(201).json({ id: this.lastID });
+    });
+});
+
+// NEW: Chat/Comment route for the discussion box
+app.post('/api/comment/:id', auth.isAuthenticated, (req, res) => {
+    const { id } = req.params;
+    const { comment } = req.body;
+    const user = req.session.user.name;
+
+    if (!comment) return res.status(400).json({ error: "Comment cannot be empty." });
+
+    db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, 'Comment', ?)`, 
+        [id, user, comment], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        });
+});
+
+// UPDATED: Dynamic Approval/Rejection route
+app.post('/api/approve/:id', auth.isAuthenticated, (req, res) => {
+    const { id } = req.params;
+    const { comment, status } = req.body; // Expecting 'Approved' or 'Rejected'
+    const user = req.session.user.name;
+    const finalStatus = status || 'Approved';
+
+    db.run(`UPDATE components SET status = ? WHERE id = ?`, [finalStatus, id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        // Log the decision in the activity history
+        const logDetail = comment || `Status changed to ${finalStatus}`;
+        db.run(`INSERT INTO activity_log (component_id, user_name, action, details) VALUES (?, ?, ?, ?)`, 
+            [id, user, finalStatus, logDetail], (err) => {
+                if (err) return res.status(500).json({ error: "Log failed" });
+                res.json({ success: true });
+            });
     });
 });
 
